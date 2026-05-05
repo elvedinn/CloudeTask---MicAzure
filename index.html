@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CloudTask – Upravljanje zadacima</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --azure-blue: #0078d4;
+      --azure-dark: #004578;
+      --azure-light: #deecf9;
+      --azure-mid: #106ebe;
+      --success: #107c10;
+      --danger: #a4262c;
+      --warning: #ca5010;
+      --bg: #f3f3f3;
+      --card: #ffffff;
+      --text: #201f1e;
+      --text-muted: #605e5c;
+      --border: #d2d0ce;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* HEADER */
+    header {
+      background: linear-gradient(135deg, var(--azure-dark) 0%, var(--azure-blue) 100%);
+      color: #fff;
+      padding: 0 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+    .header-inner {
+      max-width: 1000px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .logo svg { width: 32px; height: 32px; }
+    .header-sub {
+      font-size: 0.78rem;
+      opacity: 0.75;
+      margin-top: 2px;
+      font-weight: 400;
+    }
+    .badge {
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 0.75rem;
+    }
+
+    /* MAIN LAYOUT */
+    .container { max-width: 1000px; margin: 0 auto; padding: 32px 24px; }
+
+    /* STATS BAR */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--card);
+      border-radius: 8px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      text-align: center;
+    }
+    .stat-number { font-size: 2rem; font-weight: 700; color: var(--azure-blue); line-height: 1; }
+    .stat-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 6px; }
+
+    /* INPUT AREA */
+    .input-card {
+      background: var(--card);
+      border-radius: 8px;
+      padding: 24px;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      margin-bottom: 24px;
+    }
+    .input-card h2 { font-size: 1rem; font-weight: 600; margin-bottom: 16px; color: var(--azure-dark); }
+    .input-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .input-row input[type="text"] {
+      flex: 1 1 260px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-row input[type="text"]:focus { border-color: var(--azure-blue); box-shadow: 0 0 0 2px rgba(0,120,212,0.15); }
+    .input-row select {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      background: #fff;
+      outline: none;
+      cursor: pointer;
+    }
+    .input-row input[type="date"] {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+    }
+    .btn {
+      padding: 10px 20px;
+      border-radius: 6px;
+      border: none;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary { background: var(--azure-blue); color: #fff; }
+    .btn-primary:hover { background: var(--azure-mid); transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,120,212,0.3); }
+
+    /* FILTERS */
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .filter-btn {
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 0.83rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter-btn.active { background: var(--azure-blue); color: #fff; border-color: var(--azure-blue); }
+    .search-input {
+      margin-left: auto;
+      padding: 7px 14px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      outline: none;
+      width: 200px;
+    }
+    .search-input:focus { border-color: var(--azure-blue); }
+
+    /* TASK LIST */
+    .tasks-section { }
+    .tasks-section h2 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+    .task-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .task-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      transition: all 0.2s;
+      animation: slideIn 0.25s ease;
+    }
+    @keyframes slideIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+    .task-item:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.1); transform: translateY(-1px); }
+    .task-item.done { opacity: 0.55; background: #f8f8f8; }
+    .task-item.done .task-title { text-decoration: line-through; color: var(--text-muted); }
+
+    .task-check {
+      width: 20px; height: 20px; min-width: 20px;
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+      background: #fff;
+    }
+    .task-check:hover { border-color: var(--azure-blue); }
+    .task-check.checked { background: var(--success); border-color: var(--success); }
+    .task-check.checked::after { content: '✓'; color: #fff; font-size: 12px; font-weight: 700; }
+
+    .task-body { flex: 1; min-width: 0; }
+    .task-title { font-size: 0.97rem; font-weight: 500; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .task-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+    .tag {
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+    .tag-posao { background: #ddf4ff; color: #0550ae; }
+    .tag-studiranje { background: #fff3e0; color: #8a4f00; }
+    .tag-licno { background: #f0fdf4; color: #16604a; }
+    .tag-ostalo { background: #f3f0ff; color: #5a3e8e; }
+
+    .priority-dot {
+      width: 8px; height: 8px; border-radius: 50%; min-width: 8px;
+    }
+    .p-high { background: var(--danger); }
+    .p-mid { background: var(--warning); }
+    .p-low { background: var(--success); }
+
+    .task-date { font-size: 0.75rem; color: var(--text-muted); }
+    .task-date.overdue { color: var(--danger); font-weight: 600; }
+
+    .task-actions { display: flex; gap: 4px; }
+    .icon-btn {
+      width: 32px; height: 32px; border-radius: 6px;
+      border: none; background: transparent;
+      cursor: pointer; font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+      color: var(--text-muted);
+    }
+    .icon-btn:hover { background: #eee; }
+    .icon-btn.del:hover { background: #fde7e9; color: var(--danger); }
+
+    /* EMPTY STATE */
+    .empty {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-muted);
+    }
+    .empty .icon { font-size: 3rem; margin-bottom: 12px; }
+    .empty p { font-size: 0.95rem; }
+
+    /* FOOTER */
+    footer {
+      margin-top: 48px;
+      text-align: center;
+      padding: 20px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+    }
+    footer span { color: var(--azure-blue); font-weight: 600; }
+
+    /* PRIORITY SELECTOR */
+    .priority-select { padding: 10px 10px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 0.9rem; background:#fff; outline:none; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: var(--azure-dark); color: #fff;
+      padding: 12px 20px; border-radius: 8px;
+      font-size: 0.88rem; box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+      opacity: 0; transform: translateY(10px);
+      transition: all 0.3s; pointer-events: none; z-index: 999;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 600px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .input-row { flex-direction: column; }
+      .search-input { width: 100%; margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="32" height="32" rx="6" fill="rgba(255,255,255,0.15)"/>
+        <path d="M8 22 L16 10 L24 22" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="16" cy="10" r="2.5" fill="white"/>
+        <rect x="10" y="19" width="12" height="2.5" rx="1.25" fill="white" opacity="0.7"/>
+        <path d="M6 26 Q16 20 26 26" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+      </svg>
+      <div>
+        CloudTask
+        <div class="header-sub">Upravljanje zadacima u oblaku</div>
+      </div>
+    </div>
+    <div class="badge">☁️ Hostovano na Azure</div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-number" id="statTotal">0</div>
+      <div class="stat-label">Ukupno zadataka</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="statActive" style="color:#ca5010">0</div>
+      <div class="stat-label">Aktivnih</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="statDone" style="color:#107c10">0</div>
+      <div class="stat-label">Završenih</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="statOverdue" style="color:#a4262c">0</div>
+      <div class="stat-label">Prekoračenih</div>
+    </div>
+  </div>
+
+  <!-- ADD TASK -->
+  <div class="input-card">
+    <h2>➕ Dodaj novi zadatak</h2>
+    <div class="input-row">
+      <input type="text" id="taskInput" placeholder="Unesite naziv zadatka..." maxlength="120" />
+      <select id="categorySelect">
+        <option value="posao">💼 Posao</option>
+        <option value="studiranje">📚 Studiranje</option>
+        <option value="licno">🏠 Lično</option>
+        <option value="ostalo">🔖 Ostalo</option>
+      </select>
+      <select id="prioritySelect" class="priority-select">
+        <option value="high">🔴 Visok prioritet</option>
+        <option value="mid" selected>🟠 Srednji prioritet</option>
+        <option value="low">🟢 Nizak prioritet</option>
+      </select>
+      <input type="date" id="dateInput" />
+      <button class="btn btn-primary" onclick="addTask()">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg>
+        Dodaj
+      </button>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters">
+    <button class="filter-btn active" onclick="setFilter('sve', this)">Sve</button>
+    <button class="filter-btn" onclick="setFilter('aktivni', this)">Aktivni</button>
+    <button class="filter-btn" onclick="setFilter('zavrseni', this)">Završeni</button>
+    <button class="filter-btn" onclick="setFilter('posao', this)">💼 Posao</button>
+    <button class="filter-btn" onclick="setFilter('studiranje', this)">📚 Studiranje</button>
+    <button class="filter-btn" onclick="setFilter('licno', this)">🏠 Lično</button>
+    <input type="text" class="search-input" id="searchInput" placeholder="🔍 Pretraži zadatke..." oninput="render()" />
+  </div>
+
+  <!-- TASKS -->
+  <div class="tasks-section">
+    <h2 id="listLabel">Svi zadaci</h2>
+    <div class="task-list" id="taskList"></div>
+  </div>
+</div>
+
+<footer>
+  CloudTask &nbsp;·&nbsp; Razvijeno uz <span>Microsoft Azure Static Web Apps</span> &nbsp;·&nbsp;
+  Računarstvo u Oblaku i Nauka o Podacima &nbsp;·&nbsp; Univerzitet Donja Gorica 2026.
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ─── STATE ───────────────────────────────────────────────────────────────
+  let tasks = JSON.parse(localStorage.getItem('cloudtask_tasks') || '[]');
+  let currentFilter = 'sve';
+
+  function save() {
+    localStorage.setItem('cloudtask_tasks', JSON.stringify(tasks));
+  }
+
+  // ─── ADD ─────────────────────────────────────────────────────────────────
+  function addTask() {
+    const title = document.getElementById('taskInput').value.trim();
+    if (!title) { showToast('⚠️ Unesite naziv zadatka!'); return; }
+
+    tasks.unshift({
+      id: Date.now(),
+      title,
+      category: document.getElementById('categorySelect').value,
+      priority: document.getElementById('prioritySelect').value,
+      dueDate: document.getElementById('dateInput').value,
+      done: false,
+      created: new Date().toISOString()
+    });
+
+    document.getElementById('taskInput').value = '';
+    document.getElementById('dateInput').value = '';
+    save();
+    render();
+    showToast('✅ Zadatak dodan!');
+  }
+
+  // ─── TOGGLE ──────────────────────────────────────────────────────────────
+  function toggleTask(id) {
+    const t = tasks.find(t => t.id === id);
+    if (t) { t.done = !t.done; save(); render(); }
+  }
+
+  // ─── DELETE ──────────────────────────────────────────────────────────────
+  function deleteTask(id) {
+    tasks = tasks.filter(t => t.id !== id);
+    save(); render();
+    showToast('🗑️ Zadatak obrisan.');
+  }
+
+  // ─── FILTER ──────────────────────────────────────────────────────────────
+  function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const labels = { sve:'Svi zadaci', aktivni:'Aktivni zadaci', zavrseni:'Završeni zadaci', posao:'Zadaci – Posao', studiranje:'Zadaci – Studiranje', licno:'Zadaci – Lično' };
+    document.getElementById('listLabel').textContent = labels[f] || 'Zadaci';
+    render();
+  }
+
+  function getFiltered() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    return tasks.filter(t => {
+      if (currentFilter === 'aktivni' && t.done) return false;
+      if (currentFilter === 'zavrseni' && !t.done) return false;
+      if (['posao','studiranje','licno'].includes(currentFilter) && t.category !== currentFilter) return false;
+      if (q && !t.title.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }
+
+  // ─── RENDER ──────────────────────────────────────────────────────────────
+  function render() {
+    const list = document.getElementById('taskList');
+    const filtered = getFiltered();
+
+    // Stats
+    const today = new Date().toISOString().split('T')[0];
+    const total = tasks.length;
+    const done = tasks.filter(t => t.done).length;
+    const active = total - done;
+    const overdue = tasks.filter(t => !t.done && t.dueDate && t.dueDate < today).length;
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statActive').textContent = active;
+    document.getElementById('statDone').textContent = done;
+    document.getElementById('statOverdue').textContent = overdue;
+
+    if (filtered.length === 0) {
+      list.innerHTML = `<div class="empty"><div class="icon">📋</div><p>Nema zadataka za prikaz.</p></div>`;
+      return;
+    }
+
+    const catLabel = { posao:'Posao', studiranje:'Studiranje', licno:'Lično', ostalo:'Ostalo' };
+    const catClass = { posao:'tag-posao', studiranje:'tag-studiranje', licno:'tag-licno', ostalo:'tag-ostalo' };
+    const catEmoji = { posao:'💼', studiranje:'📚', licno:'🏠', ostalo:'🔖' };
+    const prioClass = { high:'p-high', mid:'p-mid', low:'p-low' };
+    const prioLabel = { high:'Visok', mid:'Srednji', low:'Nizak' };
+
+    list.innerHTML = filtered.map(t => {
+      const isOverdue = !t.done && t.dueDate && t.dueDate < today;
+      const dateText = t.dueDate ? (isOverdue ? `⚠️ ${t.dueDate}` : `📅 ${t.dueDate}`) : '';
+      return `
+      <div class="task-item ${t.done ? 'done' : ''}">
+        <div class="task-check ${t.done ? 'checked' : ''}" onclick="toggleTask(${t.id})"></div>
+        <div class="task-body">
+          <div class="task-title" title="${t.title}">${t.title}</div>
+          <div class="task-meta">
+            <span class="tag ${catClass[t.category]}">${catEmoji[t.category]} ${catLabel[t.category]}</span>
+            <span class="priority-dot ${prioClass[t.priority]}" title="${prioLabel[t.priority]} prioritet"></span>
+            <span style="font-size:0.72rem;color:var(--text-muted)">${prioLabel[t.priority]}</span>
+            ${dateText ? `<span class="task-date ${isOverdue ? 'overdue' : ''}">${dateText}</span>` : ''}
+          </div>
+        </div>
+        <div class="task-actions">
+          <button class="icon-btn del" onclick="deleteTask(${t.id})" title="Obriši">🗑️</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ─── TOAST ───────────────────────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // ─── ENTER KEY ───────────────────────────────────────────────────────────
+  document.getElementById('taskInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addTask();
+  });
+
+  // ─── DEMO DATA ────────────────────────────────────────────────────────────
+  if (tasks.length === 0) {
+    const today = new Date().toISOString().split('T')[0];
+    const yesterday = new Date(Date.now()-86400000).toISOString().split('T')[0];
+    tasks = [
+      { id: 1, title: 'Predati završni projekat iz Računarstva u Oblaku', category: 'studiranje', priority: 'high', dueDate: today, done: false, created: new Date().toISOString() },
+      { id: 2, title: 'Napraviti screenshot deployovanja na Azure', category: 'studiranje', priority: 'high', dueDate: today, done: false, created: new Date().toISOString() },
+      { id: 3, title: 'Proučiti Azure Static Web Apps dokumentaciju', category: 'studiranje', priority: 'mid', dueDate: '', done: true, created: new Date().toISOString() },
+      { id: 4, title: 'Ažurirati LinkedIn profil sa Azure projektom', category: 'licno', priority: 'low', dueDate: '', done: false, created: new Date().toISOString() },
+      { id: 5, title: 'Uraditi domaći zadatak iz Baza podataka', category: 'studiranje', priority: 'mid', dueDate: yesterday, done: false, created: new Date().toISOString() },
+    ];
+    save();
+  }
+
+  render();
+</script>
+</body>
+</html>
